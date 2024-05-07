@@ -1,0 +1,159 @@
+#include <vector>
+#include <fstream>
+#include <queue>
+
+class Edge {
+public:
+    int from;
+    int capacity;
+    int flow;
+    int to;
+
+    Edge(int from, int capacity, int flow, int to) {
+        this->from = from;
+        this->capacity = capacity;
+        this->flow = flow;
+        this->to = to;
+    };
+};
+
+int n;
+std::vector<std::vector<std::pair<int, int>>> G;  // список смежности графа
+std::vector<Edge> flow_edges;  // список дуг остаточной сети
+std::vector<std::vector<int>> network;  // список вершин с выходящими из нее дугами
+std::vector<int> visited;
+std::vector<int> distances;
+
+void BuildNetwork() {
+    for (int v = 0; v < 2 * (n + 1); ++v) {
+        for (auto &u : G[v]) {
+            network[v].push_back((int) flow_edges.size());
+            flow_edges.emplace_back(v, u.first, 0, u.second);
+            network[u.second].push_back((int) flow_edges.size());
+            flow_edges.emplace_back(u.second, 0, 0, v);
+        }
+    }
+}
+
+bool BuildLayeredNetwork(int s, int t, int N) {
+    std::queue<int> q;
+
+    distances.assign(N, -1);
+
+    q.push(s);
+    distances[s] = 0;
+
+    int v, to;
+    while (!q.empty() && distances[t] == -1) {
+        v = q.front();
+        q.pop();
+
+        for (auto elem : network[v]) {
+            to = flow_edges[elem].to;
+            if (distances[to] == -1 && flow_edges[elem].flow < flow_edges[elem].capacity) {
+                q.push(to);
+                distances[to] = distances[v] + 1;
+            }
+        }
+    }
+
+    return distances[t] != -1;
+}
+
+int FindBlockingFlow(int s, int t, int flow) {
+    if (!flow) return 0;
+    if (s == t) return flow;
+    for (; visited[s] < network[s].size(); ++visited[s]) {
+        auto e = network[s][visited[s]];
+        int to = flow_edges[e].to;
+        if (distances[to] == distances[s] + 1) {
+            int pushed = FindBlockingFlow(to, t, std::min(flow, flow_edges[e].capacity - flow_edges[e].flow));
+            if (pushed) {
+                flow_edges[e].capacity -= pushed;
+                flow_edges[e ^ 1].capacity += pushed;
+                return pushed;
+            }
+        }
+    }
+    return 0;
+}
+
+int DoDinic(int s, int t, int N) {
+    int flow = 0;
+
+    while (true) {
+        if (!BuildLayeredNetwork(s, t, N)) break;
+        visited.assign(N, 0);
+        while (int pushed = FindBlockingFlow(s, t, INT_MAX)) {
+            flow += pushed;
+        }
+    }
+
+    return flow;
+}
+
+int FindMaxFlow(int s, int t, int N) {
+    if (s == t) return 0;
+    BuildNetwork();
+    return DoDinic(s, t, N);
+}
+
+int main() {
+    std::ios_base::sync_with_stdio(false);
+
+    std::ifstream in("input.txt");
+    std::ofstream out("output.txt");
+
+    int m;
+
+    in >> n >> m;
+
+    int N = 2 * (n + 1);
+
+    G.assign(N, std::vector<std::pair<int, int>>(0));
+    network.assign(N, std::vector<int>(0));
+    visited.assign(N, 0);
+
+    std::vector<std::vector<int>> g(n + 1);
+
+    int from, to;
+    for (int i = 0; i < m; ++i) {
+        in >> from >> to;
+        g[from].push_back(to);
+    }
+
+    int A, B, C;
+    in >> A >> B >> C;
+
+    g[0].push_back(A);
+    g[0].push_back(B);
+
+    int s = 0;
+    int t = C;
+
+    int tmp;
+    for (int v = 0; v <= n; ++v) {
+        if (v != s && v != A && v != B) {
+            G[2 * v].push_back(std::make_pair(1, 2 * v + 1));
+            G[2 * v + 1].push_back(std::make_pair(1, 2 * v));
+
+            tmp = 2 * v + 1;
+
+            for (int u : g[v]) {
+                G[tmp].push_back(std::make_pair(1, 2 * u));
+                G[2 * u].push_back(std::make_pair(1, tmp));
+            }
+        } else {
+            tmp = 2 * v;
+
+            for (int u : g[v]) {
+                G[tmp].push_back(std::make_pair(1, 2 * u));
+               // G[2 * u].push_back(std::make_pair(1, tmp));
+            }
+        }
+    }
+
+    out << (FindMaxFlow(2 * s, 2 * t, N) == 2 ? "Yes" : "No");
+
+    return 0;
+}

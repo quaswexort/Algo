@@ -1,0 +1,150 @@
+#include <fstream>
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+std::vector<long long> values_;
+std::vector<long long> tree_;
+std::vector<long long> min_;
+std::vector<long long> max_;
+
+void Push(int i, int l, int r) {
+    if (values_[i] != 0 && r != l) {
+        long long m = (r + l) >> 1;
+
+        tree_[2 * i] += values_[i] * (m - l + 1);
+        tree_[2 * i + 1] += values_[i] * (r - m);
+
+        min_[2 * i] += values_[i];
+        min_[2 * i + 1] += values_[i];
+
+        max_[2 * i] += values_[i];
+        max_[2 * i + 1] += values_[i];
+
+        values_[2 * i] += values_[i];
+        values_[2 * i + 1] += values_[i];
+        values_[i] = 0;
+    }
+}
+
+void SetValue(int i, int l, int r, int pos, int new_value) {
+    if (l == r) {
+        tree_[i] = new_value;
+        max_[i] = new_value;
+        min_[i] = new_value;
+        return;
+    }
+    Push(i, l, r);
+    int m = (l + r) >> 1;
+    if (pos <= m)
+        SetValue(2 * i, l, m, pos, new_value);
+    else
+        SetValue(2 * i + 1, m + 1, r, pos, new_value);
+
+    tree_[i] = tree_[2 * i] + tree_[2 * i + 1];
+    max_[i] = std::max(max_[2 * i], max_[2 * i + 1]);
+    min_[i] = std::min(min_[2 * i], min_[2 * i + 1]);
+}
+
+void Add(int i, int l, int r, int a, int b, int add) {
+    if (a > b) return;
+    if (a == l && r == b) {
+        tree_[i] += add * (b - a + 1);
+        values_[i] += add;
+        min_[i] += add;
+        max_[i] += add;
+        return;
+    }
+    Push(i, l, r);
+    int m = (l + r) >> 1;
+    Add(2 * i, l, m, a, std::min(b, m), add);
+    Add(2 * i + 1, m + 1, r, std::max(a, m + 1), b, add);
+
+    tree_[i] = tree_[2 * i] + tree_[2 * i + 1];
+    max_[i] = std::max(max_[2 * i], max_[2 * i + 1]);
+    min_[i] = std::min(min_[2 * i], min_[2 * i + 1]);
+}
+
+long long FindSum(int i, int l, int r, int a, int b) {
+    if (a > b) return 0;
+    if (a == l && b == r) return tree_[i];
+
+    Push(i, l, r);
+
+    int m = (l + r) >> 1;
+    return FindSum(2 * i, l, m, a, std::min(b, m)) +
+           FindSum(2 * i + 1, m + 1, r, std::max(a, m + 1), b);
+}
+
+long long FindMin(int i, int l, int r, int a, int b) {
+    if (a > b) return LLONG_MAX;
+    if (a == l && b == r) return min_[i];
+
+    Push(i, l, r);
+    int m = (l + r) >> 1;
+    return std::min(FindMin(2 * i, l, m, a, std::min(b, m)),
+                    FindMin(2 * i + 1, m + 1, r, std::max(a, m + 1), b));
+}
+
+long long FindMax(int i, int l, int r, int a, int b) {
+    if (a > b) return LLONG_MIN;
+    if (a == l && b == r) return max_[i];
+
+    Push(i, l, r);
+    int m = (l + r) >> 1;
+    return std::max(FindMax(2 * i, l, m, a, std::min(b, m)),
+                    FindMax(2 * i + 1, m + 1, r, std::max(a, m + 1), b));
+}
+
+int main() {
+    std::ifstream in("input.txt");
+    int n;
+    in >> n;
+    int query = -1;
+
+    values_.assign(4 * n, 0);
+    tree_.assign(4 * n, 0);
+    max_.assign(4 * n, 0);
+    min_.assign(4 * n, 0);
+
+    std::ofstream out("output.txt");
+
+    int index;
+    int value;
+    int a, b;
+    while (query != 0) {
+        in >> query;
+        switch (query) {
+            case 1: {
+                in >> index >> value;
+                SetValue(1, 0, n - 1, index, value);
+                break;
+            }
+            case 2: {
+                in >> a >> b >> value;
+                Add(1, 0, n - 1, a, b, value);
+                break;
+            }
+            case 3: {
+                in >> a >> b;
+                out << FindSum(1, 0, n - 1, a, b) << std::endl;
+                break;
+            }
+            case 4: {
+                in >> a >> b;
+                out << FindMin(1, 0, n - 1, a, b) << std::endl;
+                break;
+            }
+            case 5: {
+                in >> a >> b;
+                out << FindMax(1, 0, n - 1, a, b) << std::endl;
+                break;
+            }
+            default:
+                break;
+        }
+    }
+    in.close();
+    out.close();
+    return 0;
+}

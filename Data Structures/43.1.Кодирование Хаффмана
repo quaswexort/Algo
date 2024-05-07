@@ -1,0 +1,98 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.*;
+
+public class Main {
+    public static void main(String[] args) throws IOException {
+        FastScanner scanner = new FastScanner("huffman.in");
+        int n = scanner.nextInt();
+
+        Queue<HTreeNode> nodes = new PriorityQueue<>(n,
+                Comparator.comparingLong(node -> node.freq));
+
+        for (int i = 0; i < n; ++i) {
+            nodes.add(new HTreeNode(scanner.nextLong()));
+        }
+
+        HTree hTree = new HTree();
+        hTree.createHTree(nodes);
+        hTree.countDepth(hTree.root, -1);
+
+        PrintWriter writer = new PrintWriter("huffman.out");
+        writer.print(hTree.textLength);
+        writer.close();
+    }
+}
+
+class HTreeNode {
+    long freq;
+    HTreeNode leftChild = null;
+    HTreeNode rightChild = null;
+
+    HTreeNode(long freq) {
+        this.freq = freq;
+    }
+}
+
+class HTree {
+    HTreeNode root = null;
+    long textLength = 0;
+
+    void createHTree(Queue<HTreeNode> nodes) {
+        HTreeNode left, right;
+        HTreeNode newNode;
+        while (nodes.size() > 1) {
+            left = nodes.poll();
+            right = nodes.poll();
+
+            newNode = new HTreeNode(left.freq + right.freq);
+
+            newNode.leftChild = left;
+            newNode.rightChild = right;
+
+            nodes.add(newNode);
+            root = newNode;
+        }
+    }
+
+    void countDepth(HTreeNode node, int parentDepth) {
+        if (node != null) {
+            parentDepth++;
+            countDepth(node.rightChild, parentDepth);
+            countDepth(node.leftChild, parentDepth);
+            if (node.rightChild == null && node.leftChild == null) {
+                textLength += node.freq * parentDepth;
+            }
+        }
+    }
+}
+
+class FastScanner {
+    BufferedReader reader;
+    StringTokenizer tokenizer;
+
+    public FastScanner(String fileName) throws IOException {
+        reader = new BufferedReader(new FileReader(fileName));
+    }
+
+    public String next() throws IOException {
+        while (tokenizer == null || !tokenizer.hasMoreTokens()) {
+            String line = reader.readLine();
+            if (line == null) {
+                return null;
+            }
+            tokenizer = new StringTokenizer(line);
+        }
+        return tokenizer.nextToken();
+    }
+
+    public int nextInt() throws IOException {
+        return Integer.parseInt(next());
+    }
+
+    public long nextLong() throws IOException {
+        return Long.parseLong(next());
+    }
+}

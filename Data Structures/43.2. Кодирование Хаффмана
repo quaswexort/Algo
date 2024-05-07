@@ -1,0 +1,34 @@
+#include <fstream>
+#include <queue>
+
+int main() {
+    std::ifstream in("huffman.in");
+    std::ofstream out("huffman.out");
+
+    int n;
+    in >> n;
+
+    long long res = 0;
+    std::priority_queue<long long, std::vector<long long>, std::greater<>> q;
+
+    int fr;
+    for (int i = 0; i < n; ++i) {
+        in >> fr;
+        q.push(fr);
+    }
+
+    long long tmp;
+    while (q.size() != 1) {
+        tmp = 0;
+        tmp += q.top();
+        q.pop();
+        tmp += q.top();
+        q.pop();
+        q.push(tmp);
+        res += tmp;
+    }
+
+    out << res;
+
+    return 0;
+}

@@ -1,0 +1,63 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <cmath>
+
+int main() {
+    long long n;
+    std::cin >> n;
+
+    std::vector<long long> arr(n);
+
+    for (int i = 0; i < n; ++i) {
+        std::cin >> arr[i];
+    }
+
+    int k = (int) sqrt(n + .0) + 1;
+
+    std::vector<long long> blocks(n);
+
+    for (int i = 0; i < n; i++) {
+        blocks[i / k] += arr[i];
+    }
+
+    long long q;
+    std::cin >> q;
+
+    for (int i = 0; i < q; ++i) {
+        std::string query;
+        std::cin >> query;
+        if (query == "FindSum") {
+            int l, r;
+            std::cin >> l >> r;
+
+            int lBlock = l / k;
+            int rBlock = r / k;
+            long long sum = 0;
+
+            if (lBlock == rBlock) {
+                for (int j = l; j < r; ++j) {
+                    sum += arr[j];
+                }
+            } else {
+                for (int j = l; j < (lBlock + 1) * k; ++j) {
+                    sum += arr[j];
+                }
+                for (int j = lBlock + 1; j < rBlock; ++j) {
+                    sum += blocks[j];
+                }
+                for (int j = (rBlock) * k; j < r; ++j) {
+                    sum += arr[j];
+                }
+            }
+            std::cout << sum << '\n';
+        } else {
+            int s, x;
+            std::cin >> s >> x;
+
+            arr[s] += x;
+            blocks[s / k] += x;
+        }
+    }
+    return 0;
+}

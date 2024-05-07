@@ -1,0 +1,63 @@
+#include <fstream>
+#include <queue>
+#include <vector>
+
+int n;
+std::vector<std::vector<bool>> g;
+std::vector<bool> visited;
+std::vector<int> indexes;
+int index = 1;
+
+void bfs(int start) {
+    std::queue<int> q;
+    q.push(start);
+    visited[start] = true;
+    indexes[start] = index++;
+
+    int v;
+    while (!q.empty()) {
+        v = q.front();
+        q.pop();
+
+        for (int i = 0; i < n; ++i) {
+            if (!visited[i] && g[v][i]) {
+                visited[i] = true;
+                indexes[i] = index++;
+                q.push(i);
+            }
+        }
+    }
+}
+
+int main() {
+    std::ifstream in("input.txt");
+    std::ofstream out("output.txt");
+
+    in >> n;
+
+    g.assign(n, std::vector<bool>(n));
+
+    int tmp;
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            in >> tmp;
+            g[i][j] = tmp == 1;
+        }
+    }
+
+    visited.assign(n, false);
+    indexes.assign(n, 0);
+
+    int start = 0;
+    bfs(start);
+
+    for (int i = 0; i < n; ++i) {
+        if (!visited[i])
+            bfs(i);
+    }
+
+    for (int i = 0; i < n; ++i)
+        out << indexes[i] << " ";
+
+    return 0;
+}

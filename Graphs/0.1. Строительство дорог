@@ -1,0 +1,78 @@
+import java.io.*;
+import java.util.StringTokenizer;
+
+public class Main {
+    private static int[] parents;
+    private static int[] sizes;
+
+    public static void main(String[] args) throws IOException {
+        FastScanner scanner = new FastScanner("input.txt");
+        PrintWriter writer = new PrintWriter("output.txt");
+
+        int n = scanner.nextInt();
+        int q = scanner.nextInt();
+
+        parents = new int[n];
+        sizes = new int[n];
+
+        for (int i = 0; i < n; ++i) {
+            parents[i] = i + 1;
+            sizes[i] = 1;
+        }
+
+        int k = n;
+
+        for (int i = 0; i < q; ++i) {
+            int first = scanner.nextInt();
+            int second = scanner.nextInt();
+
+            first = findSet(first);
+            second = findSet(second);
+
+            if(first != second) {
+                k--;
+                if(sizes[first - 1] < sizes[second - 1]) {
+                    parents[first - 1] = second;
+                    sizes[second - 1] += sizes[first - 1];
+                } else {
+                    parents[second - 1] = first;
+                    sizes[first - 1] += sizes[second - 1];
+                }
+            }
+
+            writer.println(k);
+        }
+
+        writer.close();
+    }
+
+    public static int findSet(int city) {
+        if(city == parents[city - 1])
+            return city;
+        return findSet(parents[city - 1]);
+    }
+}
+
+class FastScanner {
+    BufferedReader reader;
+    StringTokenizer tokenizer;
+
+    public FastScanner(String fileName) throws IOException {
+        reader = new BufferedReader(new FileReader(fileName));
+    }
+
+    public String next() throws IOException {
+        while (tokenizer == null || !tokenizer.hasMoreTokens()) {
+            String line = reader.readLine();
+            if (line == null) {
+                return null;
+            }
+            tokenizer = new StringTokenizer(line);
+        }
+        return tokenizer.nextToken();
+    }
+
+    public int nextInt() throws IOException {
+        return Integer.parseInt(next());
+    }
+}

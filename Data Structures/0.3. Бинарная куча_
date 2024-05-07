@@ -1,0 +1,68 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.StringTokenizer;
+
+public class Main {
+    public static void main(String[] args) throws IOException {
+        FastScanner scanner = new FastScanner("input.txt");
+        int n = scanner.nextInt();
+
+        int[] arr = new int[n];
+
+        for(int i = 0; i < n; ++i) {
+            arr[i] = scanner.nextInt();
+        }
+
+        PrintWriter writer = new PrintWriter("output.txt");
+        writer.print(isHeap(arr) ? "Yes" : "No");
+        writer.close();
+    }
+
+    private static boolean isHeap(int[] arr) {
+        int n = arr.length;
+        int last = 0;
+        int i = 0;
+        while(last != n - 1) {
+            for(int j = 1; j <= 2; ++j) {
+                if (2 * i + j < n) {
+                    if(arr[2 * i + j] < arr[i]) {
+                        return false;
+                    }
+                    last = 2 * i + j;
+                }
+            }
+            i++;
+        }
+        return true;
+    }
+}
+
+class FastScanner {
+    BufferedReader reader;
+    StringTokenizer tokenizer;
+
+    public FastScanner(String fileName) throws IOException {
+        reader = new BufferedReader(new FileReader(fileName));
+    }
+
+    public String nextLine() throws IOException {
+        return reader.readLine();
+    }
+
+    public String next() throws IOException {
+        while (tokenizer == null || !tokenizer.hasMoreTokens()) {
+            String line = reader.readLine();
+            if (line == null) {
+                return null;
+            }
+            tokenizer = new StringTokenizer(line);
+        }
+        return tokenizer.nextToken();
+    }
+
+    public int nextInt() throws IOException {
+        return Integer.parseInt(next());
+    }
+}

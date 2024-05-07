@@ -1,0 +1,61 @@
+import java.io.*;
+import java.util.ArrayList;
+import java.util.StringTokenizer;
+
+public class Main {
+    public static void main(String[] args) throws IOException {
+        FastScanner scanner = new FastScanner("input.txt");
+
+        int n = scanner.nextInt();
+
+        ArrayList<ArrayList<Integer>> adjacencyMatrix = new ArrayList<>(n);
+        for (int i = 0; i < n; ++i) {
+            adjacencyMatrix.add(new ArrayList<>());
+        }
+
+        int m = scanner.nextInt();
+
+        for (int k = 0; k < m; ++k) {
+            int i = scanner.nextInt() - 1;
+            int j = scanner.nextInt() - 1;
+
+            adjacencyMatrix.get(i).add(j + 1);
+            adjacencyMatrix.get(j).add(i + 1);
+        }
+
+        PrintWriter writer = new PrintWriter("output.txt");
+
+        for (int i = 0; i < n; ++i) {
+            writer.print(adjacencyMatrix.get(i).size() + " ");
+            for (int j = 0; j < adjacencyMatrix.get(i).size(); ++j) {
+                writer.print(adjacencyMatrix.get(i).get(j) + " ");
+            }
+            writer.println();
+        }
+        writer.close();
+    }
+}
+
+class FastScanner {
+    BufferedReader reader;
+    StringTokenizer tokenizer;
+
+    public FastScanner(String fileName) throws IOException {
+        reader = new BufferedReader(new FileReader(fileName));
+    }
+
+    public String next() throws IOException {
+        while (tokenizer == null || !tokenizer.hasMoreTokens()) {
+            String line = reader.readLine();
+            if (line == null) {
+                return null;
+            }
+            tokenizer = new StringTokenizer(line);
+        }
+        return tokenizer.nextToken();
+    }
+
+    public int nextInt() throws IOException {
+        return Integer.parseInt(next());
+    }
+}

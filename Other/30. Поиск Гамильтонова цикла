@@ -1,0 +1,103 @@
+#include <vector>
+#include <fstream>
+#include <stack>
+
+#define max_n 10000
+
+int n;
+int g[max_n][max_n];
+std::pair<int, int> nodes[max_n];
+std::vector<std::vector<int>> mst;
+std::vector<int> res;
+int res_weight = 0;
+
+int sel_e[max_n] = {-1};
+bool used[max_n] = {false};
+
+void BuildMst() {
+    std::vector<int> min_e(n, INT_MAX);
+
+    min_e[0] = 0;
+    for (int i = 0; i < n; ++i) {
+        int v = -1;
+        for (int j = 0; j < n; ++j) {
+            if (!used[j] && (v == -1 || min_e[j] < min_e[v])) {
+                v = j;
+            }
+        }
+        used[v] = true;
+
+        if (sel_e[v] != -1) {
+            mst[v].push_back(sel_e[v]);
+            mst[sel_e[v]].push_back(v);
+        }
+
+        for (int to = 0; to < n; ++to) {
+            if (g[v][to] < min_e[to]) {
+                min_e[to] = g[v][to];
+                sel_e[to] = v;
+            }
+        }
+    }
+}
+
+void FindEulerCycle(int u, std::vector<int> &first) {
+    while (first[u] < mst[u].size()) {
+        int v = mst[u][first[u]];
+        first[u]++;
+        if (g[u][v] > 0) {
+            g[u][v] *= -1;
+            g[v][u] *= -1;
+
+            FindEulerCycle(v, first);
+        }
+    }
+
+    if(!res.empty()) {
+        res_weight += std::abs(g[res[res.size() - 1]][u]);
+    }
+
+    res.push_back(u);
+}
+
+int main() {
+    std::ifstream in("input.txt");
+    std::ofstream out("output.txt");
+
+    in >> n;
+
+    int x, y;
+    for (int i = 0; i < n; ++i) {
+        in >> x >> y;
+        nodes[i] = {x, y};
+    }
+
+    // заполняем матрицу смежности графа
+    int weight;
+    for (int i = 0; i < n; ++i) {
+        for (int j = i + 1; j < n; ++j) {
+            weight = std::abs(nodes[i].first - nodes[j].first) +
+                     std::abs(nodes[i].second - nodes[j].second);
+            g[i][j] = weight;
+            g[j][i] = weight;
+        }
+    }
+
+    // строим минимальное остовное дерево (алгоритм Прима)
+    mst.assign(n, std::vector<int>());
+    BuildMst();
+
+    // находим эйлеров цикл
+    std::vector<int> first(n, 0);
+    std::stack<int> euler;
+    FindEulerCycle(0, first);
+
+    res_weight += std::abs(g[res[0]][res[res.size() - 1]]);
+
+    out << res_weight << std::endl;
+    for (auto elem : res)
+        out << elem + 1 << " ";
+    out << res[0] + 1;
+
+    return 0;
+}

@@ -1,0 +1,115 @@
+#include <fstream>
+#include <vector>
+#include <set>
+
+int main() {
+    std::ifstream in("input.txt");
+    std::ofstream out("output.txt");
+
+    int n, w, h;
+    in >> n >> w >> h;
+
+    std::set<int> trees_sorted_by_x;
+    std::set<int> trees_sorted_by_y;
+    
+    std::vector<std::vector<int>> vects(h + 1);
+    
+    std::vector<int> same_coordinates(w + 1, 0);
+    
+    std::vector<std::pair<int, int>> trees(w + 1, {-1, -1});
+
+    int x, y;
+    for (int i = 0; i < n; ++i) {
+        in >> x >> y;
+        if (x != 0 && y != 0 && x != w && y != h) {
+            trees_sorted_by_x.insert(x);
+
+            same_coordinates[x]++;
+
+            trees_sorted_by_y.insert(y);
+            vects[y].push_back(x);
+        }
+    }
+
+    trees_sorted_by_y.insert(0);
+    trees_sorted_by_y.insert(h);
+    vects[0].push_back(0);
+    vects[h].push_back(w);
+    trees_sorted_by_x.insert(0);
+    trees_sorted_by_x.insert(w);
+    same_coordinates[0]++;
+    same_coordinates[w]++;
+
+    int x_max = 0;
+    auto it1 = trees_sorted_by_x.begin();
+    trees[*it1].first = 0;
+    auto it2 = trees_sorted_by_x.begin();
+    it2++;
+    while (it2 != trees_sorted_by_x.end()) {
+        trees[*it1].second = *it2;
+        trees[*it2].first = *it1;
+
+        x_max = std::max(x_max, *it2 - *it1);
+
+        it1++;
+        it2++;
+    }
+    trees[*it1].second = w;
+
+    int default_x_max = x_max;
+    int res = 1;
+
+    auto y_min = trees_sorted_by_y.begin();
+
+    while (*y_min != h) {
+
+        x_max = default_x_max;
+
+        for (auto xi : vects[*y_min]) {
+            if (same_coordinates[xi] == 1) {
+                trees[trees[xi].first].second = trees[xi].second;
+                trees[trees[xi].second].first = trees[xi].first;
+
+                x_max = std::max(x_max, trees[xi].second - trees[xi].first);
+            }
+            same_coordinates[xi]--;
+        }
+
+        auto y_max = trees_sorted_by_y.rbegin();
+
+        while (*y_max >= 1 + *y_min) {
+            for (auto xi : vects[*y_max]) {
+                if (same_coordinates[xi] == 1) {
+                    trees[trees[xi].first].second = trees[xi].second;
+                    trees[trees[xi].second].first = trees[xi].first;
+
+                    x_max = std::max(x_max, trees[xi].second - trees[xi].first);
+                }
+                res = std::max(res, x_max * (*y_max - *y_min));
+
+                same_coordinates[xi]--;
+            }
+
+            y_max++;
+        }
+
+        y_min++;
+
+        same_coordinates[w]++;
+        auto iter = y_min;
+        while (*iter != h) {
+            for (auto xi : vects[*iter]) {
+                if (same_coordinates[xi] == 0) {
+                    trees[trees[xi].first].second = xi;
+                    trees[trees[xi].second].first = xi;
+                }
+                same_coordinates[xi]++;
+            }
+            iter++;
+        }
+    }
+
+    out << res;
+
+    return 0;
+}

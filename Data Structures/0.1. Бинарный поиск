@@ -1,0 +1,51 @@
+#include <iostream>
+
+int lowerBound(int n, const int *arr, int key) {
+    int l = 0;
+    int r = n;
+    while (l < r) {
+        int mid = (l + r) >> 1;
+        if (key <= arr[mid]) {
+            r = mid;
+        } else {
+            l = mid + 1;
+        }
+    }
+    return l;
+}
+
+int upperBound(int n, const int *arr, int key) {
+    int l = 0;
+    int r = n;
+    while (l < r) {
+        int mid = (l + r) >> 1;
+        if (key < arr[mid]) {
+            r = mid;
+        } else {
+            l = mid + 1;
+        }
+    }
+    return l;
+}
+
+int arr[300000];
+
+int main() {
+    int n;
+    std::cin >> n;
+
+    for (int i = 0; i < n; ++i) {
+        std::cin >> arr[i];
+    }
+
+    int k;
+    std::cin >> k;
+
+    int key;
+    for (int i = 0; i < k; ++i) {
+        std::cin >> key;
+        int tmp = lowerBound(n, arr, key);
+        std::cout << (tmp != n && arr[tmp] == key ? '1' : '0');
+        std::cout << " " << tmp << " " << upperBound(n, arr, key) << std::endl;
+    }
+}

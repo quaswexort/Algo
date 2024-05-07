@@ -1,0 +1,57 @@
+#include <fstream>
+#include <queue>
+#include <string>
+
+int main() {
+    std::ifstream in("input.txt");
+
+    int m, n;
+    in >> m >> n;
+
+    int *values = new int[m];
+    for (int i = 0; i < m; ++i) {
+        in >> values[i];
+    }
+
+    std::priority_queue<int, std::vector<int>> max_heap;
+    std::priority_queue<int, std::vector<int>, std::greater<>> min_heap;
+
+    std::string res;
+    int query = 0;
+    in >> query;
+    int values_number = 0;
+
+    for (int i = 0; i < n; ) {
+        if (values_number != query) {
+            if(!max_heap.empty() && values[values_number] >= max_heap.top()) {
+                min_heap.push(values[values_number++]);
+            } else {
+                if (!max_heap.empty()) {
+                    min_heap.push(max_heap.top());
+                    max_heap.pop();
+                }
+                max_heap.push(values[values_number++]);
+            }
+        } else {
+            res += " " + std::to_string(max_heap.top());
+
+            if (min_heap.empty()) {
+                max_heap.push(values[values_number++]);
+            } else {
+                max_heap.push(min_heap.top());
+                min_heap.pop();
+            }
+
+            ++i;
+
+            if (i != n)
+                in >> query;
+        }
+    }
+
+    std::ofstream out("output.txt");
+
+    out << res.substr(1);
+
+    return 0;
+}

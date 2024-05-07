@@ -1,0 +1,52 @@
+#include <fstream>
+#include <stack>
+#include <vector>
+
+int n;
+std::vector<std::vector<bool>> g;
+std::vector<bool> visited;
+std::vector<int> indexes;
+int index = 1;
+
+void dfs(int start) {
+    visited[start] = true;
+    indexes[start] = index++;
+
+    for(int i = 0; i < n; ++i) {
+        if(!visited[i] && g[start][i])
+            dfs(i);
+    }
+}
+
+int main() {
+    std::ifstream in("input.txt");
+    std::ofstream out("output.txt");
+
+    in >> n;
+
+    g.assign(n, std::vector<bool>(n));
+
+    int tmp;
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            in >> tmp;
+            g[i][j] = tmp == 1;
+        }
+    }
+
+    visited.assign(n, false);
+    indexes.assign(n, 0);
+
+    int start = 0;
+    dfs(start);
+
+    for (int i = 0; i < n; ++i) {
+        if (!visited[i])
+            dfs(i);
+    }
+
+    for (int i = 0; i < n; ++i)
+        out << indexes[i] << " ";
+
+    return 0;
+}

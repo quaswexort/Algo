@@ -1,0 +1,120 @@
+#include <vector>
+#include <iostream>
+
+class Edge {
+public:
+    int from;
+    int capacity;
+    int flow;
+    int to;
+
+    Edge(int from, int capacity, int flow, int to) {
+        this->from = from;
+        this->capacity = capacity;
+        this->flow = flow;
+        this->to = to;
+    };
+};
+
+int n, m;
+std::vector<std::vector<std::pair<int, int>>> g;  // список смежности графа
+std::vector<Edge> flow_edges;  // список дуг остаточной сети
+std::vector<std::vector<int>> network;  // список вершин с выходящими из нее дугами
+std::vector<bool> visited;
+std::vector<int> path_pred;
+
+void BuildNetwork() {
+    for (int v = 0; v < n; ++v) {
+        for (auto &u : g[v]) {
+            network[v].push_back((int) flow_edges.size());
+            flow_edges.emplace_back(v, u.first, 0, u.second);
+            network[u.second].push_back((int) flow_edges.size());
+            flow_edges.emplace_back(u.second, 0, 0, v);
+        }
+    }
+}
+
+void FindPath(int v) {
+    visited[v] = true;
+
+    for (auto &e : network[v]) {
+        int u = flow_edges[e].to;
+        if (!visited[u] && flow_edges[e].capacity - flow_edges[e].flow > 0) {
+            path_pred[u] = e;
+            FindPath(u);
+        }
+    }
+}
+
+std::vector<int> RestorePath(int v) {
+    std::vector<int> path;
+    while (path_pred[v] != -1) {
+        int e = path_pred[v];
+        path.push_back(e);
+        v = flow_edges[e].from;
+    }
+    return path;
+}
+
+int DoFordFulkerson(int s, int t) {
+    int current_flow = 0;
+
+    while (true) {
+        for (int i = 0; i < n; ++i) {
+            visited[i] = false;
+            path_pred[i] = -1;
+        }
+
+        FindPath(s);
+
+        if (!visited[t]) break;
+
+        std::vector<int> path = RestorePath(t);
+
+        // finding path min capacity
+        int flow = flow_edges[path[0]].capacity - flow_edges[path[0]].flow;
+        for (auto &e : path) {
+            flow = std::min(flow, flow_edges[e].capacity - flow_edges[e].flow);
+        }
+
+        // pushing path
+        for (auto &e : path) {
+            flow_edges[e].capacity -= flow;
+            flow_edges[e ^ 1].capacity += flow;
+        }
+
+        current_flow += flow;
+    }
+
+    return current_flow;
+}
+
+int FindMaxFlow(int s, int t) {
+    if (s == t) return 0;
+    BuildNetwork();
+    return DoFordFulkerson(s, t);
+}
+
+int main() {
+    std::ios_base::sync_with_stdio(false);
+
+    std::cin >> n >> m;
+
+    g.assign(n, std::vector<std::pair<int, int>>(0));
+    network.assign(n, std::vector<int>(0));
+    visited.assign(n, false);
+    path_pred.assign(n, -1);
+
+    int from, to, w;
+    for (int i = 0; i < m; ++i) {
+        std::cin >> from >> to >> w;
+        g[from - 1].push_back(std::make_pair(w, to - 1));
+    }
+
+    int s = 0;
+    int t = n - 1;
+
+    std::cout << FindMaxFlow(s, t) << std::endl;
+
+    return 0;
+}

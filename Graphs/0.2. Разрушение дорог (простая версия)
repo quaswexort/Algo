@@ -1,0 +1,142 @@
+import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.StringTokenizer;
+
+public class Main {
+    private static int[] parents;
+    private static long[] sizes;
+
+    public static void main(String[] args) throws IOException {
+        FastScanner scanner = new FastScanner("input.txt");
+        PrintWriter writer = new PrintWriter("output.txt");
+
+        int n = scanner.nextInt();
+        int m = scanner.nextInt();
+        int q = scanner.nextInt();
+
+        parents = new int[n];
+        sizes = new long[n];
+
+        for (int i = 0; i < n; ++i) {
+            parents[i] = i + 1;
+            sizes[i] = 1;
+        }
+
+        Map<Integer, Road> roads = new HashMap<>(m);
+
+        for (int i = 0; i < m; ++i) {
+            int first = scanner.nextInt();
+            int second = scanner.nextInt();
+            roads.put(i + 1, new Road(first, second));
+        }
+
+        int[] destroyedRoads = new int[q];
+        boolean[] isDestroyed = new boolean[m];
+
+        for (int i = 0; i < q; ++i) {
+            int roadNumber = scanner.nextInt();
+            destroyedRoads[i] = roadNumber;
+            isDestroyed[roadNumber - 1] = true;
+        }
+
+        int k = n;
+
+        for (int i = 1; i <= m; ++i) {
+            if (!isDestroyed[i - 1]) {
+                int first = findSet(roads.get(i).firstCity);
+                int second = findSet(roads.get(i).secondCity);
+
+                if (first != second) {
+                    k--;
+                    buildRoad(first, second);
+                }
+            }
+        }
+
+        int[] res = new int[q];
+
+        int i = 0;
+        if (k != 1) {
+            for (; i < q; ++i) {
+                int roadNumber = destroyedRoads[q - i - 1];
+
+                int first = findSet(roads.get(roadNumber).firstCity);
+                int second = findSet(roads.get(roadNumber).secondCity);
+
+                if (first != second) {
+                    k--;
+                    buildRoad(first, second);
+                }
+
+                res[i] = 1;
+
+                if (k == 1) {
+                    i++;
+                    break;
+                }
+            }
+        }
+
+        for (; i < q; ++i) {
+            res[i] = 0;
+        }
+
+        for (int j = q - 1; j >= 0; --j) {
+            if (res[j] == 0) writer.print(1);
+            else writer.print(0);
+        }
+
+        writer.close();
+    }
+
+    public static int findSet(int city) {
+        if (city == parents[city - 1])
+            return city;
+        return findSet(parents[city - 1]);
+    }
+
+    public static void buildRoad(int first, int second) {
+        if (sizes[first - 1] < sizes[second - 1]) {
+            parents[first - 1] = second;
+            sizes[second - 1] += sizes[first - 1];
+        } else {
+            parents[second - 1] = first;
+            sizes[first - 1] += sizes[second - 1];
+        }
+    }
+}
+
+class Road {
+    int firstCity;
+    int secondCity;
+
+    Road(int firstCity, int secondCity) {
+        this.firstCity = firstCity;
+        this.secondCity = secondCity;
+    }
+}
+
+class FastScanner {
+    BufferedReader reader;
+    StringTokenizer tokenizer;
+
+    public FastScanner(String fileName) throws IOException {
+        reader = new BufferedReader(new FileReader(fileName));
+    }
+
+    public String next() throws IOException {
+        while (tokenizer == null || !tokenizer.hasMoreTokens()) {
+            String line = reader.readLine();
+            if (line == null) {
+                return null;
+            }
+            tokenizer = new StringTokenizer(line);
+        }
+        return tokenizer.nextToken();
+    }
+
+    public int nextInt() throws IOException {
+        return Integer.parseInt(next());
+    }
+}

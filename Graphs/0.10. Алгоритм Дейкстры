@@ -1,0 +1,53 @@
+#include <fstream>
+#include <vector>
+#include <queue>
+#include <climits>
+
+int n, m;
+std::vector<std::vector<std::pair<long long, int>>> g;
+std::vector<long long> dist;
+
+void DoDijkstra() {
+    std::vector<bool> processed(n, false);
+    std::priority_queue<std::pair<long long, int>, std::vector<std::pair<long long, int>>, std::greater<>> q;
+
+    q.push(std::make_pair(0, 0));
+
+    while (!q.empty()) {
+        std::pair<long long, int> e1 = q.top();
+        q.pop();
+
+        if (processed[e1.second]) continue;
+
+        processed[e1.second] = true;
+        dist[e1.second] = e1.first;
+
+        for (auto &e2 : g[e1.second]) {
+            if (!processed[e2.second] && e1.first + e2.first < dist[e2.second])
+                q.push(std::make_pair(e1.first + e2.first, e2.second));
+        }
+    }
+}
+
+int main() {
+    std::ifstream in("input.txt");
+    std::ofstream out("output.txt");
+    
+    in >> n >> m;
+
+    g.assign(n, std::vector<std::pair<long long, int>>(0));
+    dist.assign(n, LLONG_MAX);
+
+    int u, v, w;
+    for (int i = 0; i < m; ++i) {
+        in >> u >> v >> w;
+        g[u - 1].push_back(std::make_pair(w, v - 1));
+        g[v - 1].push_back(std::make_pair(w, u - 1));
+    }
+    
+    DoDijkstra();
+
+    out << dist[n - 1];
+
+    return 0;
+}

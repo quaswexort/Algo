@@ -1,0 +1,233 @@
+#include <vector>
+#include <iostream>
+#include <fstream>
+#include <stack>
+#include <list>
+
+#define max_n 10
+
+int n, m, b;
+int field[max_n][max_n] = {0};
+
+int queen_counter = 0;
+int max_queen_number = -1;
+
+std::vector<std::list<std::pair<int, int>>> res;
+
+enum FigureType {
+    QUEEN,
+    BLACK_FIGURE
+};
+
+class Figure {
+public:
+    int column;
+    int line;
+    FigureType type;
+
+    Figure(int column_, int line_, FigureType type_)
+            : column(column_), line(line_), type(type_) {}
+};
+
+void Perebor() {
+    std::stack<Figure> lines_st[max_n];
+    std::stack<Figure> upper_diagonal_st[2 * max_n - 1];
+    std::stack<Figure> lower_diagonal_st[2 * max_n];
+
+    std::stack<Figure> common_st;
+
+    int col = 0;
+    int line = -1;
+
+    int processing_col = 0;
+
+    std::list<std::pair<int, int>> vec;
+    while (true) {
+        if (col == m) {
+            if (max_queen_number > n - processing_col + b) break;
+
+//            if (queen_counter >= max_queen_number) {
+//                if (queen_counter > max_queen_number) {
+//                    max_queen_number = queen_counter;
+//                    res.clear();
+//                }
+////                res.emplace_back(0);
+////                for (int j = 0; j < m; ++j) {
+////                    for (int i = 0; i < n; ++i) {
+////                        if (field[i][j] == 2) {
+////                            res[res.size() - 1].push_back(j);
+////                            res[res.size() - 1].push_back(i);
+////                        }
+////                    }
+////                }
+//                res.push_back(vec);
+//            }
+
+            while (!common_st.empty() && common_st.top().type == BLACK_FIGURE) {
+                int black_fig_line = common_st.top().line;
+                int black_fig_col = common_st.top().column;
+
+                common_st.pop();
+                lines_st[black_fig_line].pop();
+                upper_diagonal_st[black_fig_col + black_fig_line].pop();
+                lower_diagonal_st[black_fig_col - black_fig_line + n].pop();
+
+//                // check line
+//                if (!lines_st[black_fig_line].empty() && lines_st[black_fig_line].top().type == QUEEN) {
+//                    lines[black_fig_line] = true;
+//                }
+//                // check upper diagonal
+//                if (!upper_diagonal_st[black_fig_col + black_fig_line].empty() &&
+//                    upper_diagonal_st[black_fig_col + black_fig_line].top().type == QUEEN) {
+//                    upper_diagonal[black_fig_col + black_fig_line] = true;
+//                }
+//                // check lower diagonal
+//                if (!lower_diagonal_st[black_fig_col - black_fig_line + n].empty() &&
+//                    lower_diagonal_st[black_fig_col - black_fig_line + n].top().type == QUEEN) {
+//                    lower_diagonal[black_fig_col - black_fig_line + n] = true;
+//                }
+
+            }
+
+            if (common_st.empty()) break;
+
+            // common_st.top().first == QUEEN
+            line = common_st.top().line;
+            col = common_st.top().column;
+
+            common_st.pop();
+            lines_st[line].pop();
+            upper_diagonal_st[col + line].pop();
+            lower_diagonal_st[col - line + n].pop();
+
+            vec.pop_back();
+
+            --queen_counter;
+//            lines[line] = false;
+//            upper_diagonal[col + line] = false;
+//            lower_diagonal[col - line + n] = false;
+
+            field[line][col] = 0;
+        }
+
+        int new_line = line + 1;
+
+
+        if (new_line == n) {
+            col++;
+            line = -1;
+            continue;
+        }
+
+        bool finish = false;
+
+        while (field[new_line][col] == 1 ||
+               (!lines_st[new_line].empty() &&
+                lines_st[new_line].top().type == QUEEN) ||
+               (!upper_diagonal_st[col + new_line].empty() &&
+                upper_diagonal_st[col + new_line].top().type == QUEEN) ||
+               (!lower_diagonal_st[col - new_line + n].empty() &&
+                lower_diagonal_st[col - new_line + n].top().type == QUEEN)) {
+
+            if (field[new_line][col] == 1) {
+                Figure fig = Figure(col, new_line, BLACK_FIGURE);
+                common_st.push(fig);
+                lines_st[new_line].push(fig);
+                upper_diagonal_st[col + new_line].push(fig);
+                lower_diagonal_st[col - new_line + n].push(fig);
+
+//                lines[new_line] = false;
+//                upper_diagonal[col + new_line] = false;
+//                lower_diagonal[col - new_line + n] = false;
+            }
+
+            if (new_line >= n - 1) {
+                finish = true;
+                break;
+            } else {
+                new_line++;
+            }
+
+        }
+
+
+        if (finish) {
+            ++col;
+            line = -1;
+        } else {
+            field[new_line][col] = 2;
+
+            vec.emplace_back(col, new_line);
+            if(res.empty() || vec.size() > res[0].size()) {
+                max_queen_number = vec.size();
+                res.clear();
+                res.push_back(vec);
+            } else if (vec.size() == res[0].size()) {
+                res.push_back(vec);
+            }
+
+            if (queen_counter == 0 && col > processing_col) {
+                ++processing_col;
+            }
+
+            ++queen_counter;
+
+            Figure fig = Figure(col, new_line, QUEEN);
+            common_st.push(fig);
+            lines_st[new_line].push(fig);
+            upper_diagonal_st[col + new_line].push(fig);
+            lower_diagonal_st[col - new_line + n].push(fig);
+
+//            lines[new_line] = true;
+//            upper_diagonal[col + new_line] = true;
+//            lower_diagonal[col - new_line + n] = true;
+
+
+            bool is_next_col = true;
+            int black_figure_pos;
+            for (int i = new_line + 1; i < n; ++i) {
+                if (field[i][col] == 1) {
+                    is_next_col = false;
+                    black_figure_pos = i;
+                    break;
+                }
+            }
+
+            if (is_next_col) {
+                ++col;
+                line = -1;
+            } else {
+                line = black_figure_pos - 1;
+            }
+        }
+    }
+}
+
+int main() {
+    std::ifstream in("input.txt");
+    std::ofstream out("output.txt");
+
+    in >> m >> n >> b;
+
+    int x, y;
+    for (int i = 0; i < b; ++i) {
+        in >> x >> y;
+        field[y][x] = 1; // black figure
+    }
+
+    Perebor();
+
+    out << max_queen_number << std::endl;
+    out << ((res.empty() || max_queen_number == 0) ? 0 : res.size()) << std::endl;
+
+    if (max_queen_number != 0) {
+        for (const auto &elem : res) {
+            for (auto i : elem) {
+                out << i.first << " " << i.second << " ";
+            }
+            out << std::endl;
+        }
+    }
+
+    return 0;
+}
